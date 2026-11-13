@@ -1,0 +1,545 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Partidos en el Monumental</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  /* Paleta azul + naranja: se distingue con todos los tipos de daltonismo.
+     Nunca se usa el color solo: siempre va acompañado de ícono o texto. */
+  :root {
+    --bg: #F7F5F0;
+    --card: #FFFFFF;
+    --text: #1E1E1E;
+    --muted: #4F4F4F;
+    --border: #D3CFC4;
+    --blue: #0B5CAD;
+    --blue-bg: #E2EDF9;
+    --orange: #9E4C00;
+    --orange-bg: #FFEFDD;
+    --btn-text: #FFFFFF;
+    --focus: #0B5CAD;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #16181D; --card: #20232A; --text: #EDEBE6; --muted: #BDBAB2;
+      --border: #3A3E47; --blue: #8CC0F5; --blue-bg: #1B2C42;
+      --orange: #F5A55A; --orange-bg: #3A2814; --btn-text: #10141A; --focus: #8CC0F5;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #16181D; --card: #20232A; --text: #EDEBE6; --muted: #BDBAB2;
+    --border: #3A3E47; --blue: #8CC0F5; --blue-bg: #1B2C42;
+    --orange: #F5A55A; --orange-bg: #3A2814; --btn-text: #10141A; --focus: #8CC0F5;
+  }
+
+  * { box-sizing: border-box; }
+  html { font-size: 18px; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    /* Lexend: tipografía pensada para facilitar la lectura (dislexia).
+       Si no hay internet, usa Verdana, también muy legible. */
+    font-family: "Lexend", "Atkinson Hyperlegible", Verdana, Tahoma, sans-serif;
+    line-height: 1.6;
+    letter-spacing: 0.02em;
+    word-spacing: 0.08em;
+  }
+  main { max-width: 760px; margin: 0 auto; padding: 24px 16px 48px; }
+  h1 { font-size: 1.6rem; line-height: 1.25; margin: 0 0 4px; }
+  h2 { font-size: 1.2rem; margin: 32px 0 12px; display: flex; align-items: center; gap: 8px; }
+  p { margin: 0 0 12px; }
+  .sub { color: var(--muted); margin-bottom: 20px; }
+
+  .toolbar { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-bottom: 12px; }
+  button, .btn {
+    font: inherit; font-weight: 600; letter-spacing: inherit;
+    border-radius: 10px; padding: 10px 18px; cursor: pointer;
+    border: 2px solid var(--blue); text-decoration: none;
+    display: inline-flex; align-items: center; gap: 8px; min-height: 44px;
+  }
+  .primary { background: var(--blue); color: var(--btn-text); }
+  .secondary { background: transparent; color: var(--blue); }
+  button:disabled { opacity: .6; cursor: wait; }
+  :focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+
+  .status { color: var(--muted); font-size: .9rem; }
+  .banner {
+    border-radius: 12px; padding: 14px 16px; margin: 16px 0;
+    border: 2px solid; display: flex; gap: 12px; align-items: flex-start;
+  }
+  .banner .ico { font-size: 1.3rem; line-height: 1.3; }
+  .banner.warn { border-color: var(--orange); background: var(--orange-bg); }
+  .banner.info { border-color: var(--blue); background: var(--blue-bg); }
+  .banner strong { display: block; }
+  .progress { height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; margin-top: 8px; }
+  .progress > div { height: 100%; background: var(--blue); width: 0; transition: width .2s; }
+
+  .card {
+    background: var(--card); border: 1px solid var(--border); border-radius: 14px;
+    padding: 16px 18px; margin-bottom: 14px;
+  }
+  .card.week { border: 2px solid var(--blue); border-left-width: 10px; }
+  .card.tbc { border-style: dashed; }
+  .when { font-weight: 700; font-size: 1.05rem; }
+  .teams { font-size: 1.25rem; font-weight: 700; margin: 6px 0 2px; }
+  .teams .vs { font-weight: 400; color: var(--muted); padding: 0 6px; }
+  .comp { color: var(--muted); }
+  .badges { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0 4px; }
+  .badge {
+    display: inline-flex; align-items: center; gap: 6px; font-size: .85rem; font-weight: 600;
+    padding: 3px 10px; border-radius: 999px; border: 2px solid;
+  }
+  .badge.blue { color: var(--blue); border-color: var(--blue); background: var(--blue-bg); }
+  .badge.orange { color: var(--orange); border-color: var(--orange); background: var(--orange-bg); border-style: dashed; }
+  .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
+  .actions .btn { padding: 8px 14px; font-size: .9rem; min-height: 40px; }
+  .empty { padding: 24px; text-align: left; }
+  footer { margin-top: 40px; color: var(--muted); font-size: .85rem; border-top: 1px solid var(--border); padding-top: 16px; }
+  footer a, .comp a { color: var(--blue); }
+  .sr { position: absolute; left: -9999px; }
+  .card-row { display: flex; gap: 16px; align-items: flex-start; }
+  .crest { flex: 0 0 64px; width: 64px; height: 64px; object-fit: contain;
+    background: #FFFFFF; border-radius: 12px; padding: 6px; border: 1px solid var(--border); }
+  .crest-ph { flex: 0 0 64px; width: 64px; height: 64px; border-radius: 12px; border: 1px dashed var(--border);
+    display: flex; align-items: center; justify-content: center; font-size: 1.6rem; }
+  .card-body { flex: 1; min-width: 0; }
+  .place { font-weight: 600; }
+  .filters { display: flex; flex-wrap: wrap; gap: 10px; margin: 8px 0 4px; }
+  .filters button { background: transparent; color: var(--blue); padding: 8px 14px; min-height: 40px; font-size: .9rem; }
+  .filters button[aria-pressed="true"] { background: var(--blue); color: var(--btn-text); }
+  .filters button[aria-pressed="true"]::before { content: "✓ "; }
+</style>
+</head>
+<body>
+<main>
+  <h1>⚽ Partidos en el Monumental</h1>
+  <p class="sub">Partidos de fútbol masculino que se lleven a cabo en El Estadio Monumental, juegue River o cualquier otro equipo: liga, copas nacionales y copas internacionales.</p>
+
+  <div class="toolbar">
+    <button id="refresh" class="primary" type="button">🔄 Actualizar</button>
+    <button id="notif" class="secondary" type="button" hidden>🔔 Activar avisos en la compu</button>
+  </div>
+  <div id="status" class="status" aria-live="polite"></div>
+  <div id="progressWrap" class="progress" hidden><div id="progressBar"></div></div>
+
+  <div id="banners" aria-live="polite"></div>
+  <div id="list"></div>
+
+  <footer>
+    <p><strong>Fuente:</strong> datos públicos de ESPN (Liga Profesional, Copa Argentina, Supercopa Argentina, Copa de la Liga, Libertadores, Sudamericana y Recopa). Los horarios se muestran en hora argentina.</p>
+    <p><strong>Avisos:</strong> con la app abierta, te avisa cuando falten 24 horas para un partido. Para que te avise aunque la app esté cerrada, agregá el partido a Google Calendar con el botón de cada partido.</p>
+    <p>Los partidos que la fuente todavía no publicó no aparecen. Los que están publicados sin horario definitivo se marcan con <span class="badge orange">⚠ A confirmar</span>.</p>
+  </footer>
+</main>
+
+<script>
+(() => {
+  "use strict";
+
+  // ---------- Configuración ----------
+  const TZ = "America/Argentina/Buenos_Aires";
+  const WINDOW_DAYS = 120;          // próximos 4 meses
+  const NEAR_DAYS = 14;             // días cercanos: se revisan más seguido
+  const NEAR_MAX_AGE = 30 * 60e3;   // 30 minutos
+  const FAR_MAX_AGE = 12 * 3600e3;  // 12 horas
+  const CORE = "https://sports.core.api.espn.com/v2/sports/soccer/leagues/";
+  const LEAGUES = {
+    "arg.1": "Liga Profesional (Primera División)",
+    "arg.copa": "Copa Argentina",
+    "arg.supercopa": "Supercopa Argentina",
+    "arg.copa_lpf": "Copa de la Liga",
+    "conmebol.libertadores": "Copa Libertadores",
+    "conmebol.sudamericana": "Copa Sudamericana",
+    "conmebol.recopa": "Recopa Sudamericana",
+  };
+  // Estadios que se siguen. "owner" = el dueño de la cancha.
+  const STADIUMS = {
+    monumental: {
+      name: "Estadio Más Monumental", short: "Monumental", owner: /river plate/i, ownerName: "River",
+      place: "Estadio Más Monumental, Av. Figueroa Alcorta 7597, Buenos Aires",
+      // Hay otros "Monumental" en Sudamérica: se exige que sea el de Buenos Aires.
+      test: (v) => String(v.id) === "10786" ||
+        (/monumental|antonio\s*v(e|a)spucio\s*liberti/.test(norm(v.fullName)) && /buenos aires|nunez|belgrano/.test(norm((v.address || {}).city))),
+    },
+  };
+  const logoUrl = (teamId) => teamId ? `https://a.espncdn.com/i/teamlogos/soccer/500/${teamId}.png` : "";
+
+  const ROUND_ES = [
+    [/round-of-64/, "32avos de final"], [/round-of-32/, "16avos de final"],
+    [/round-of-16|rd-of-16/, "Octavos de final"], [/quarterfinal/, "Cuartos de final"],
+    [/semifinal/, "Semifinal"], [/^final$|-final$/, "Final"],
+    [/group/, "Fase de grupos"], [/first-stage/, "Primera fase"],
+    [/second-stage/, "Segunda fase"], [/third-stage/, "Tercera fase"],
+    [/knockout-round-playoffs/, "Playoffs"], [/apertura/, "Apertura"], [/clausura/, "Clausura"],
+  ];
+
+  // Modo prueba (solo para revisar la app con fechas pasadas): index.html#prueba=2026-01-15
+  const testMatch = location.hash.match(/prueba=(\d{4}-\d{2}-\d{2})/);
+  const TEST_NOW = testMatch ? new Date(testMatch[1] + "T12:00:00-03:00").getTime() : null;
+  const now = () => TEST_NOW ?? Date.now();
+  const KEY = TEST_NOW ? "monumental_test_" : "monumental_";
+
+  // ---------- Guardado (recordar entre aperturas) ----------
+  function load(name, fallback) {
+    try { const v = localStorage.getItem(KEY + name); return v ? JSON.parse(v) : fallback; }
+    catch { return fallback; }
+  }
+  function save(name, value) {
+    try { localStorage.setItem(KEY + name, JSON.stringify(value)); } catch {}
+  }
+  let events = load("events2", {});       // id -> {t, date, m: partido o null}
+  let leagueIds = load("leagueIds", {});  // liga -> [ids]
+  let meta = load("meta", { lastUpdated: null, lastError: null });
+  let notified = load("notified", {});
+  let filter = load("filter", "todos");
+
+  // ---------- Fechas ----------
+  const fmtDay = new Intl.DateTimeFormat("es-AR", { timeZone: TZ, weekday: "long", day: "numeric", month: "long" });
+  const fmtDayYear = new Intl.DateTimeFormat("es-AR", { timeZone: TZ, weekday: "long", day: "numeric", month: "long", year: "numeric" });
+  const fmtTime = new Intl.DateTimeFormat("es-AR", { timeZone: TZ, hour: "2-digit", minute: "2-digit", hour12: false });
+  const fmtStamp = new Intl.DateTimeFormat("es-AR", { timeZone: TZ, day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit", hour12: false });
+  const ymdAR = (t) => new Intl.DateTimeFormat("en-CA", { timeZone: TZ }).format(new Date(t)); // AAAA-MM-DD
+  const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
+
+  function windowDays() {
+    const base = new Date(ymdAR(now()) + "T12:00:00Z").getTime();
+    const out = [];
+    for (let i = -1; i <= WINDOW_DAYS; i++) out.push(new Date(base + i * 864e5).toISOString().slice(0, 10).replace(/-/g, ""));
+    return out;
+  }
+  const dayToTime = (ymd) => new Date(`${ymd.slice(0,4)}-${ymd.slice(4,6)}-${ymd.slice(6,8)}T12:00:00-03:00`).getTime();
+
+  // ---------- Lectura de la fuente ----------
+  async function getJSON(url) {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 15000);
+    try {
+      const r = await fetch(url, { signal: ctrl.signal });
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      return await r.json();
+    } finally { clearTimeout(timer); }
+  }
+
+  const norm = (s) => (s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+  const stadiumOf = (venue) => venue ? (Object.keys(STADIUMS).find((k) => STADIUMS[k].test(venue)) || null) : null;
+
+  function roundName(slug) {
+    if (!slug) return "";
+    for (const [re, es] of ROUND_ES) if (re.test(slug)) {
+      if (/apertura|clausura/.test(slug) && !/^(apertura|clausura)$/.test(slug)) {
+        // ej. "clausura---round-of-16" -> "Clausura · Octavos de final"
+        const torneo = /apertura/.test(slug) ? "Apertura" : "Clausura";
+        const rest = slug.replace(/apertura|clausura/, "").replace(/^-+/, "");
+        const sub = rest ? roundName(rest) : "";
+        return sub && sub !== torneo ? `${torneo} · ${sub}` : torneo;
+      }
+      return es;
+    }
+    return "";
+  }
+
+  function parseEvent(d, league) {
+    const c = (d.competitions || [])[0] || {};
+    const stadium = stadiumOf(c.venue);
+    if (!stadium) return null;
+    const comp = c.competitors || [];
+    const homeC = comp.find((x) => x.homeAway === "home") || {};
+    const awayC = comp.find((x) => x.homeAway === "away") || {};
+    // El nombre viene como "Visitante at Local" (o "Visitante en Local" en español)
+    const name = String(d.name || "");
+    let parts = name.split(" at ");
+    if (parts.length !== 2) {
+      const i = name.lastIndexOf(" en ");
+      parts = i > 0 ? [name.slice(0, i), name.slice(i + 4)] : [name];
+    }
+    const away = parts.length === 2 ? parts[0] : "A definir";
+    const home = parts.length === 2 ? parts[1] : (d.name || "A definir");
+    const note = ((c.notes || [])[0] || {}).headline || "";
+    return {
+      id: String(d.id),
+      league,
+      stadium,
+      homeId: homeC.id || "",
+      awayId: awayC.id || "",
+      date: d.date,
+      timeOk: d.timeValid !== false && c.timeValid !== false,
+      dateTBD: false,
+      home, away,
+      round: roundName(norm(note).replace(/\s+/g, "-")) || "",
+      link: ((d.links || [])[0] || {}).href || "",
+    };
+  }
+
+  async function pool(tasks, size, onDone) {
+    let i = 0;
+    const workers = Array.from({ length: size }, async () => {
+      while (i < tasks.length) { const t = tasks[i++]; await t(); onDone(); }
+    });
+    await Promise.all(workers);
+  }
+
+  let busy = false;
+  async function update(force) {
+    if (busy) return;
+    busy = true;
+    const btn = document.getElementById("refresh");
+    btn.disabled = true; btn.textContent = "⏳ Actualizando…";
+    setStatus("Buscando partidos en la fuente…");
+    showProgress(0);
+
+    const days = windowDays();
+    const range = days[0] + "-" + days[days.length - 1];
+    let ok = 0, fail = 0;
+
+    // 1) Lista de partidos de cada competencia entre hoy y dentro de 4 meses.
+    await Promise.all(Object.keys(LEAGUES).map(async (lg) => {
+      try {
+        const ids = [];
+        let page = 1, pages = 1;
+        do {
+          const d = await getJSON(`${CORE}${lg}/events?dates=${range}&limit=1000&page=${page}`);
+          for (const it of d.items || []) { const m = String(it.$ref || "").match(/events\/(\d+)/); if (m) ids.push(m[1]); }
+          pages = d.pageCount || 1;
+        } while (++page <= pages);
+        leagueIds[lg] = ids;
+        ok++;
+      } catch { fail++; }
+    }));
+
+    // 2) Detalle de cada partido (estadio, fecha, hora). Lo reciente se reutiliza del guardado.
+    const tasks = [];
+    const nearLimit = now() + NEAR_DAYS * 864e5;
+    for (const lg of Object.keys(leagueIds)) {
+      for (const id of leagueIds[lg]) {
+        const e = events[id];
+        if (e && !force) {
+          const near = !e.date || new Date(e.date).getTime() <= nearLimit;
+          if (Date.now() - e.t < (near ? NEAR_MAX_AGE : FAR_MAX_AGE)) continue;
+        }
+        tasks.push(async () => {
+          try {
+            const d = await getJSON(`${CORE}${lg}/events/${id}?lang=es&region=ar`);
+            events[id] = { t: Date.now(), date: d.date, m: parseEvent(d, lg) };
+            ok++;
+          } catch { fail++; }
+        });
+      }
+    }
+    let done = 0;
+    await pool(tasks, 10, () => showProgress(done++ / Math.max(tasks.length, 1)));
+
+    // Olvidar partidos que ya no figuran en ninguna lista
+    const alive = new Set(Object.values(leagueIds).flat());
+    for (const id of Object.keys(events)) if (!alive.has(id)) delete events[id];
+    save("events2", events);
+    save("leagueIds", leagueIds);
+
+    const attempted = ok + fail;
+    if (attempted > 0 && fail / attempted > 0.5) {
+      meta.lastError = Date.now();
+    } else {
+      meta.lastError = null;
+      meta.partial = fail > 0;
+      meta.lastUpdated = Date.now();
+    }
+    save("meta", meta);
+
+    showProgress(null);
+    btn.disabled = false; btn.textContent = "🔄 Actualizar";
+    busy = false;
+    render();
+  }
+
+  // ---------- Partidos guardados ----------
+  function matches() {
+    const t = now();
+    return Object.values(events)
+      .map((e) => e.m)
+      .filter((m) => m && new Date(m.date).getTime() > t - 3 * 3600e3)
+      .sort((a, b) => new Date(a.date) - new Date(b.date));
+  }
+
+  // ---------- Google Calendar ----------
+  function gcalLink(m) {
+    const start = new Date(m.date);
+    const p = new URLSearchParams();
+    p.set("action", "TEMPLATE");
+    p.set("text", `⚽ ${m.home} vs ${m.away}`);
+    if (m.timeOk) {
+      const end = new Date(start.getTime() + 2 * 3600e3);
+      const f = (d) => d.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
+      p.set("dates", `${f(start)}/${f(end)}`);
+    } else {
+      const y = ymdAR(start).replace(/-/g, "");
+      const y2 = new Date(dayToTime(y) + 864e5).toISOString().slice(0, 10).replace(/-/g, "");
+      p.set("dates", `${y}/${y2}`);
+    }
+    p.set("ctz", TZ);
+    p.set("location", STADIUMS[m.stadium].place);
+    const lines = [
+      LEAGUES[m.league] + (m.round ? " · " + m.round : ""),
+      m.timeOk ? "" : "⚠ Horario todavía a confirmar: revisá la app más cerca de la fecha.",
+      "Sugerencia: agregá recordatorios 1 día antes y 3 horas antes.",
+      m.link ? "Más info: " + m.link : "",
+    ].filter(Boolean);
+    p.set("details", lines.join("\n"));
+    return "https://calendar.google.com/calendar/render?" + p.toString();
+  }
+
+  // ---------- Avisos 24 hs antes ----------
+  function upcoming24(list) {
+    const t = now();
+    return list.filter((m) => { const s = new Date(m.date).getTime(); return s > t && s - t <= 24 * 3600e3; });
+  }
+  function checkAlerts(list) {
+    const soon = upcoming24(list);
+    for (const m of soon) {
+      if (notified[m.id]) continue;
+      notified[m.id] = Date.now();
+      if (!TEST_NOW && "Notification" in window && Notification.permission === "granted") {
+        try {
+          new Notification(`⚽ Partido en el ${STADIUMS[m.stadium].short}`, {
+            body: `${whenText(m)}: ${m.home} vs ${m.away} (${LEAGUES[m.league]})`,
+          });
+        } catch {}
+      }
+    }
+    // limpiar avisos de partidos que ya pasaron
+    for (const id of Object.keys(notified)) if (Date.now() - notified[id] > 7 * 864e5) delete notified[id];
+    save("notified", notified);
+    document.title = soon.length ? `⏰ (${soon.length}) Partidos en el Monumental` : "Partidos en el Monumental";
+  }
+
+  // ---------- Pantalla ----------
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+  function setStatus(txt) { $("status").textContent = txt; }
+  function showProgress(f) {
+    if (f === null) { $("progressWrap").hidden = true; return; }
+    $("progressWrap").hidden = false;
+    $("progressBar").style.width = Math.round((isNaN(f) ? 1 : f) * 100) + "%";
+  }
+
+  function relDay(m) {
+    const d = ymdAR(new Date(m.date)), today = ymdAR(now()), tomorrow = ymdAR(now() + 864e5);
+    if (d === today) return "Hoy";
+    if (d === tomorrow) return "Mañana";
+    return null;
+  }
+  function whenText(m) {
+    const d = new Date(m.date);
+    const r = relDay(m);
+    const sameYear = ymdAR(d).slice(0, 4) === ymdAR(now()).slice(0, 4);
+    const day = cap((sameYear ? fmtDay : fmtDayYear).format(d));
+    const dayTxt = r ? `${r} (${day})` : day;
+    if (m.dateTBD) return `Fecha tentativa: ${dayTxt}`;
+    return m.timeOk ? `${dayTxt} · ${fmtTime.format(d)} hs` : `${dayTxt} · hora a confirmar`;
+  }
+
+  function card(m, week) {
+    const badges = [];
+    const r = relDay(m);
+    const s = new Date(m.date).getTime();
+    if (s - now() <= 24 * 3600e3) badges.push(`<span class="badge blue">⏰ ${r === "Hoy" ? "Es hoy" : "Faltan menos de 24 hs"}</span>`);
+    else if (week) badges.push(`<span class="badge blue">📅 Esta semana</span>`);
+    if (m.dateTBD) badges.push(`<span class="badge orange">⚠ Día y hora a confirmar</span>`);
+    else if (!m.timeOk) badges.push(`<span class="badge orange">⚠ Hora a confirmar</span>`);
+    const st = STADIUMS[m.stadium];
+    if (st.owner.test(m.home)) badges.push(`<span class="badge blue">🏠 ${esc(st.ownerName)} local</span>`);
+    else badges.push(`<span class="badge blue">🔁 ${esc(m.home)} usa la cancha</span>`);
+
+    const crest = m.homeId
+      ? `<img class="crest" src="${esc(logoUrl(m.homeId))}" alt="Escudo de ${esc(m.home)}, local en esta fecha" loading="lazy" onerror="this.outerHTML='<div class=&quot;crest-ph&quot; aria-hidden=&quot;true&quot;>🛡️</div>'">`
+      : `<div class="crest-ph" aria-hidden="true">🛡️</div>`;
+
+    return `<article class="card ${week ? "week" : ""} ${m.timeOk ? "" : "tbc"}">
+     <div class="card-row">${crest}<div class="card-body">
+      <div class="when">${esc(whenText(m))}</div>
+      <div class="place">📍 ${esc(st.name)}</div>
+      <div class="teams">${esc(m.home)}<span class="vs">vs</span>${esc(m.away)}</div>
+      <div class="comp">🏆 ${esc(LEAGUES[m.league])}${m.round ? " · " + esc(m.round) : ""}</div>
+      <div class="badges">${badges.join("")}</div>
+      <div class="actions">
+        <a class="btn secondary" href="${esc(gcalLink(m))}" target="_blank" rel="noopener">📆 Agregar a Google Calendar</a>
+        ${m.link ? `<a class="btn secondary" href="${esc(m.link)}" target="_blank" rel="noopener">ℹ️ Ver en ESPN</a>` : ""}
+      </div>
+     </div></div>
+    </article>`;
+  }
+
+  function render() {
+    document.querySelectorAll("[data-filter]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.filter === filter)));
+    const all = matches();
+    const list = filter === "todos" ? all : all.filter((m) => m.stadium === filter);
+    const banners = [];
+
+    if (TEST_NOW) banners.push(`<div class="banner info"><span class="ico">🧪</span><div><strong>Modo prueba</strong>La app simula que hoy es ${esc(cap(fmtDayYear.format(new Date(TEST_NOW))))}. Para volver al modo normal, abrí el archivo sin “#prueba” al final.</div></div>`);
+
+    if (meta.lastError) {
+      banners.push(`<div class="banner warn" role="alert"><span class="ico">⚠️</span><div><strong>No pudimos conectarnos con la fuente.</strong>${
+        meta.lastUpdated ? `Te mostramos la última información guardada, actualizada el ${esc(fmtStamp.format(new Date(meta.lastUpdated)))} hs.` : "Todavía no hay información guardada."
+      } Revisá tu conexión a internet y tocá “Actualizar”.</div></div>`);
+    } else if (meta.partial) {
+      banners.push(`<div class="banner warn"><span class="ico">⚠️</span><div><strong>Algunos días no se pudieron revisar.</strong>Para esos días se usa la última información guardada. Podés tocar “Actualizar” para reintentar.</div></div>`);
+    }
+
+    const soon = upcoming24(all);
+    for (const m of soon) {
+      banners.push(`<div class="banner info"><span class="ico">⏰</span><div><strong>${esc(whenText(m))} · ${esc(STADIUMS[m.stadium].short)}</strong>${esc(m.home)} vs ${esc(m.away)} · ${esc(LEAGUES[m.league])}</div></div>`);
+    }
+    $("banners").innerHTML = banners.join("");
+
+    setStatus(meta.lastUpdated ? `Última actualización: ${fmtStamp.format(new Date(meta.lastUpdated))} hs` : "Todavía sin actualizar.");
+
+    const limit = now() + 7 * 864e5;
+    const week = list.filter((m) => new Date(m.date).getTime() <= limit);
+    const later = list.filter((m) => new Date(m.date).getTime() > limit);
+
+    let html = "";
+    if (!list.length) {
+      html = `<div class="card empty">
+        <p><strong>No hay partidos programados en el Monumental en los próximos 4 meses.</strong></p>
+        <p class="comp">Puede ser porque los torneos de este año están terminando y el fixture siguiente todavía no se publicó. La app lo va a mostrar apenas aparezca en la fuente.</p>
+      </div>`;
+    } else {
+      html += `<h2>📅 Próximos 7 días <span class="sr">(${week.length})</span></h2>`;
+      html += week.length ? week.map((m) => card(m, true)).join("") : `<p class="comp">No hay partidos en los próximos 7 días.</p>`;
+      if (later.length) html += `<h2>🗓️ Más adelante</h2>` + later.map((m) => card(m, false)).join("");
+    }
+    $("list").innerHTML = html;
+    checkAlerts(all);
+  }
+
+  // ---------- Botones ----------
+  $("refresh").addEventListener("click", () => update(true));
+  document.querySelectorAll("[data-filter]").forEach((b) => b.addEventListener("click", () => {
+    filter = b.dataset.filter; save("filter", filter); render();
+  }));
+
+  function setupNotifButton() {
+    const b = $("notif");
+    if (!("Notification" in window) || Notification.permission !== "default") { b.hidden = true; return; }
+    b.hidden = false;
+    b.onclick = async () => {
+      try { await Notification.requestPermission(); } catch {}
+      setupNotifButton();
+      if (Notification.permission === "granted") new Notification("🔔 Avisos activados", { body: "Te avisaremos 24 hs antes de cada partido mientras la app esté abierta." });
+    };
+  }
+
+  // ---------- Inicio ----------
+  render();            // muestra enseguida lo guardado
+  setupNotifButton();
+  update(false);       // y se actualiza sola al abrir
+  setInterval(() => render(), 60e3);              // revisa avisos cada minuto
+  setInterval(() => update(false), 3 * 3600e3);   // y vuelve a buscar cada 3 horas si queda abierta
+})();
+</script>
+</body>
+</html>
